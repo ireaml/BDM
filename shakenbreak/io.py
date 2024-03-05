@@ -87,6 +87,8 @@ def parse_energies(
             sorted_energies_dict["Unperturbed"] = defect_energies_dict["Unperturbed"]
         if "Dimer" in defect_energies_dict:
             sorted_energies_dict["Dimer"] = defect_energies_dict["Dimer"]
+        if "Trimer" in defect_energies_dict:
+            sorted_energies_dict["Trimer"] = defect_energies_dict["Trimer"]
         return sorted_energies_dict
 
     def save_file(energies, defect, path):
@@ -248,6 +250,7 @@ def parse_energies(
                 "Rattled",
                 "Unperturbed",
                 "Dimer",
+                "Trimer",
             ]  # distortion directories
         )
         and "High_Energy" not in dir
@@ -368,7 +371,8 @@ def parse_energies(
                         "Bond_Distortion",
                         "Rattled",
                         "Unperturbed",
-                        "Dimer",
+                                    "Dimer",
+                                    "Trimer",
                     ]
                 )
                 and "High_Energy" in dir

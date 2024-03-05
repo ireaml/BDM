@@ -117,18 +117,21 @@ def _get_distortion_filename(distortion) -> str:
             distortion_label = f"Bond_Distortion_{distortion:.1f}%"
     elif isinstance(distortion, str):
         if "_from_" in distortion and (
-            "Rattled" not in distortion and "Dimer" not in distortion
+            "Rattled" not in distortion
+            and "Dimer" not in distortion
+            and "Trimer" not in distortion
         ):
             distortion_label = f"Bond_Distortion_{distortion}"
             # runs from other charge states
         elif (
             "Rattled_from_" in distortion
             or "Dimer_from" in distortion
-            or distortion
-            in [
+            or "Trimer_from" in distortion
+            or distortion in [
                 "Unperturbed",
                 "Rattled",
                 "Dimer",
+                "Trimer",
             ]
         ):
             distortion_label = distortion
@@ -136,8 +139,9 @@ def _get_distortion_filename(distortion) -> str:
             distortion == "Unperturbed"
             or distortion == "Rattled"
             or distortion == "Dimer"
+            or distortion == "Trimer"
         ):
-            distortion_label = distortion  # e.g. "Unperturbed"/"Rattled"/"Dimer"
+            distortion_label = distortion  # e.g. "Unperturbed"/"Rattled"/"Dimer"/"Trimer"
         else:
             try:  # try converting to float, in case user entered '0.5'
                 distortion = float(distortion)
@@ -170,6 +174,7 @@ def _format_distortion_names(
         "Unperturbed" in distortion_label
         or "Rattled" in distortion_label
         or "Dimer" in distortion_label
+        or "Trimer" in distortion_label
     ) and "from" not in distortion_label:
         return distortion_label
     elif distortion_label.startswith("Bond_Distortion") and distortion_label.endswith(
@@ -186,6 +191,8 @@ def _format_distortion_names(
         return distortion_label
     elif "Dimer" in distortion_label and "_from_" in distortion_label:
         return distortion_label
+    elif "Trimer" in distortion_label and "_from_" in distortion_label:
+        return distortion_label
     # detected as High_Energy - normally wouldn't be parsed, but for debugging purposes
     # TODO: remove this
     elif (
@@ -194,8 +201,9 @@ def _format_distortion_names(
     ):
         return float(distortion_label.split("Bond_Distortion_")[-1].split("%")[0]) / 100
     elif (
-        "Dimer" in distortion_label or "Rattled" in distortion_label
-    ) and "High_Energy" in distortion_label:
+        ("Dimer" in distortion_label or "Rattled" in distortion_label or "Trimer" in distortion_label)
+        and "High_Energy" in distortion_label
+    ):
         return distortion_label
     else:
         return "Label_not_recognized"
@@ -504,10 +512,7 @@ def get_structures(
         distortion_subdirectories = [
             i
             for i in next(os.walk(f"{output_path}/{defect_species}"))[1]
-            if ("Bond_Distortion" in i)
-            or ("Unperturbed" in i)
-            or ("Rattled" in i)
-            or ("Dimer" in i)
+            if ("Bond_Distortion" in i) or ("Unperturbed" in i) or ("Rattled" in i) or ("Dimer" in i) or ("Trimer" in i)
         ]  # distortion subdirectories
         if not distortion_subdirectories:
             raise FileNotFoundError(
@@ -787,10 +792,10 @@ def calculate_struct_comparison(
                     distortion
                 ] = None  # algorithm couldn't match lattices. Set comparison
                 # metric to None
-                # warnings.warn(
-                #     f"pymatgen StructureMatcher could not match lattices between "
-                #     f"{ref_name} and {distortion} structures."
-                # )  # Unnecessary warning, occurs often with highly-distorted/disordered structures
+                warnings.warn(
+                    f"pymatgen StructureMatcher could not match lattices between "
+                    f"{ref_name} and {distortion} structures."
+                )
 
     return disp_dict
 
@@ -1000,10 +1005,8 @@ def get_homoionic_bonds(
             homoionic neighbours and distances (A) (e.g.
             {'O(1)': {'O(2)': '2.0 A', 'O(3)': '2.0 A'}})
     """
-    if isinstance(elements, str):  # For backward compatibility
-        elements = [
-            elements,
-        ]
+    if isinstance(elements, str): # For backward compatibility
+        elements = [elements,]
     structure = structure.copy()
     structure.remove_oxidation_states()
     for element in elements:
@@ -1014,13 +1017,11 @@ def get_homoionic_bonds(
     # Search for homoionic bonds in the whole structure
     sites = []
     for element in elements:
-        sites.extend(
-            [
-                (site_index, site)
-                for site_index, site in enumerate(structure)
-                if site.species_string == element
-            ]
-        )
+        sites.extend([
+            (site_index, site)
+            for site_index, site in enumerate(structure)
+            if site.species_string == element
+        ])
     homoionic_bonds = {}
     for site_index, site in sites:
         neighbours = structure.get_neighbors(site, r=radius)
@@ -1044,9 +1045,9 @@ def get_homoionic_bonds(
                         if neighbour[0] == element
                     }
                     if f"{site.species_string}({site_index})" in homoionic_bonds:
-                        homoionic_bonds[f"{site.species_string}({site_index})"].update(
-                            homoionic_neighbours
-                        )
+                        homoionic_bonds[
+                            f"{site.species_string}({site_index})"
+                        ].update(homoionic_neighbours)
                     else:
                         homoionic_bonds[
                             f"{site.species_string}({site_index})"

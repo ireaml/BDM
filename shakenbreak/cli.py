@@ -30,7 +30,7 @@ def _parse_defect_dirs(path) -> list:
         if os.path.isdir(f"{path}/{dir}")
         and any(
             fnmatch.filter(os.listdir(f"{path}/{dir}"), f"{dist}*")
-            for dist in ["Rattled", "Unperturbed", "Bond_Distortion", "Dimer"]
+            for dist in ["Rattled", "Unperturbed", "Bond_Distortion"]
         )  # only parse defect directories that contain distortion folders
     ]
 
@@ -298,7 +298,7 @@ def generate(
     ]
 
     if name is None:
-        name = get_defect_name_from_entry(defect_entries[0], relaxed=False)
+        name = get_defect_name_from_entry(defect_entries[0])
 
     # if user_charges not set for all defects, print info about how charge states will be
     # determined
@@ -813,7 +813,7 @@ def run(submit_command, job_script, job_name_option, all, verbose):
         job_name_option = "-N"
 
     call(
-        f"{os.path.dirname(__file__)}/SnB_run.sh {optional_flags} {submit_command} {job_script} "
+        f"{os.path.dirname(__file__)}/scripts/SnB_run.sh {optional_flags} {submit_command} {job_script} "
         f"{job_name_option}",
         shell=True,
     )
@@ -1411,7 +1411,7 @@ def groundstate(
         if os.path.isdir(dir)
         and any(
             substring in dir
-            for substring in ["Bond_Distortion", "Rattled", "Unperturbed", "Dimer"]
+            for substring in ["Bond_Distortion", "Rattled", "Unperturbed"]
         )
     ):  # distortion subfolders in cwd
         # check if defect folders also in cwd
@@ -1472,7 +1472,7 @@ def groundstate(
 @click.option(
     "--outcar",
     "-o",
-    help="Path to OUTCAR(.gz) file",
+    help="Path to OUTCAR file",
     default="OUTCAR",
     type=click.Path(exists=True, dir_okay=False),
 )
